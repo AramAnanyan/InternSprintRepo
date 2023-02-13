@@ -2,6 +2,10 @@ package com.example.internsprint;
 
 import android.os.Bundle;
 import android.provider.SyncStateContract;
+//import android.telecom.Call;
+import retrofit2.Call;
+
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -10,26 +14,19 @@ import android.app.ProgressDialog;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.Map;
+import okhttp3.ResponseBody;
+import retrofit2.Callback;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 
 public class MainActivity extends AppCompatActivity {
 
     private EditText etFirstName;
     private EditText etLastName;
-    private EditText etEmail;
-    private EditText etPassword;
+
     private Button btnRegister;
     //private RequestQueue mQueue;
 
@@ -46,59 +43,41 @@ public class MainActivity extends AppCompatActivity {
 
         btnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                String firstName = etFirstName.getText().toString().trim();
-                String surName = etLastName.getText().toString().trim();
+            public void onClick(View v) {
+                Retrofit retrofit = new Retrofit.Builder()
+                        .baseUrl("https://7244-37-252-94-167.eu.ngrok.io")
+                        .addConverterFactory(GsonConverterFactory.create())
+                        .build();
 
+                RegistrationApi api = retrofit.create(RegistrationApi.class);
 
-                if (firstName.isEmpty() || surName.isEmpty() ) {
-                    Toast.makeText(MainActivity.this, "Please fill out all the fields.", Toast.LENGTH_SHORT).show();
-                } else {
-                    registerUser(firstName, surName);
-                }
+                Call<ResponseBody> call = api.registerUser(new RegisterModel(etFirstName.getText().toString(), etLastName.getText().toString()));
+                call.enqueue(new Callback<ResponseBody>() {
+                    @Override
+                    public void onResponse(Call<ResponseBody> call, retrofit2.Response<ResponseBody> response) {
+                        if (response.isSuccessful()) {
+                            Log.i("asd",response.toString()+" , ");
+                            Toast t=Toast.makeText(getApplicationContext(), "ok", Toast.LENGTH_SHORT);
+                            t.show();
+                        } else {
+                            Log.i("asd",response.toString()+" , ");
+                            Toast t=Toast.makeText(getApplicationContext(), "noresp", Toast.LENGTH_SHORT);
+                            t.show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ResponseBody> call, Throwable t) {
+                        Toast k=Toast.makeText(getApplicationContext(), "fail:", Toast.LENGTH_SHORT);
+                        Log.i("asd",call.toString()+" , "+t.toString());
+                        k.show();
+                        // Handle failure
+                    }
+                });
             }
         });
-    }
-
-    private void registerUser(final String name, final String surName) {
-        // Showing progress dialog at user registration time.
-        /*progressDialog.setMessage("Please Wait, We are Registering Your Data on Server");
-        progressDialog.show();*/
-
-        // Creating string request with post method.
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, "https://localhost:7290/api/Users",
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String ServerResponse) {
-
-                        Toast.makeText(MainActivity.this, ServerResponse, Toast.LENGTH_LONG).show();
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError volleyError) {
-
-                        Toast.makeText(MainActivity.this, volleyError.toString(), Toast.LENGTH_LONG).show();
-                    }
-                }) {
-            @Override
-            protected Map<String, String> getParams() {
-
-                // Creating Map String Params.
-                Map<String, String> params = new HashMap<>();
-
-                // Adding All values to Params.
-                params.put("name", name);
-                params.put("surName", surName);
 
 
-                return params;
-            }
-
-        };
-
-        /*// Adding the StringRequest to the queue.
-        Volley.newRequestQueue(MainActivity.this).add(stringRequest);*/
     }
 }
 
