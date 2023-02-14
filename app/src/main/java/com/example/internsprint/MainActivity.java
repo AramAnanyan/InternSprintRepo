@@ -3,6 +3,13 @@ package com.example.internsprint;
 import android.os.Bundle;
 import android.provider.SyncStateContract;
 //import android.telecom.Call;
+import okhttp3.FormBody;
+import okhttp3.HttpUrl;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import retrofit2.Call;
 
 import android.util.Log;
@@ -15,6 +22,11 @@ import android.app.ProgressDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.Objects;
 
 import okhttp3.ResponseBody;
 import retrofit2.Callback;
@@ -44,41 +56,38 @@ public class MainActivity extends AppCompatActivity {
         btnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Retrofit retrofit = new Retrofit.Builder()
-                        .baseUrl("https://7244-37-252-94-167.eu.ngrok.io")
-                        .addConverterFactory(GsonConverterFactory.create())
-                        .build();
+                asdf as=new asdf();
+                as.start();
+                }
 
-                RegistrationApi api = retrofit.create(RegistrationApi.class);
-
-                Call<ResponseBody> call = api.registerUser(new RegisterModel(etFirstName.getText().toString(), etLastName.getText().toString()));
-                call.enqueue(new Callback<ResponseBody>() {
-                    @Override
-                    public void onResponse(Call<ResponseBody> call, retrofit2.Response<ResponseBody> response) {
-                        if (response.isSuccessful()) {
-                            Log.i("asd",response.toString()+" , ");
-                            Toast t=Toast.makeText(getApplicationContext(), "ok", Toast.LENGTH_SHORT);
-                            t.show();
-                        } else {
-                            Log.i("asd",response.toString()+" , ");
-                            Toast t=Toast.makeText(getApplicationContext(), "noresp", Toast.LENGTH_SHORT);
-                            t.show();
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<ResponseBody> call, Throwable t) {
-                        Toast k=Toast.makeText(getApplicationContext(), "fail:", Toast.LENGTH_SHORT);
-                        Log.i("asd",call.toString()+" , "+t.toString());
-                        k.show();
-                        // Handle failure
-                    }
-                });
-            }
         });
 
+    }
+     class asdf extends Thread{
+        @Override
+        public void run() {
+            String url = "https://localhost:7290/api/Users";
+            //String url = "https://1d9b-37-252-94-167.eu.ngrok.io/api/Users";
+            HttpUrl.Builder httpBuilder = Objects.requireNonNull(HttpUrl.parse(url)).newBuilder();
+            RequestBody requestBody = new FormBody.Builder()
+                    .add("name", etFirstName.getText().toString())
+                    .add("surname", etLastName.getText().toString())
+                    .build();
+            OkHttpClient client = new OkHttpClient();
+            Request request = new Request.Builder()
+                    .url(httpBuilder.build())
+                    .post(requestBody)
+                    .build();
+            try (Response response = client.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+                }
 
+                String responseBody = response.body().string();
+                // process the response body
+            } catch (IOException e) {
+                Log.e("abc", e.getMessage());
+            }
+            }
     }
 }
-
-
